@@ -12,6 +12,8 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 
 ## [Unreleased]
 
+## [0.6.45] - 2026-05-30
+
 - Support versioned name and package spec in `--package` and `--exclude`. ([#298](https://github.com/taiki-e/cargo-hack/pull/298))
 
 - Add `--workspace-behavior=cargo` option. ([#298](https://github.com/taiki-e/cargo-hack/pull/298), [3b4f421](https://github.com/taiki-e/cargo-hack/commit/3b4f4214b28da88ea64c003e657a8b5a6218e3aa))
@@ -584,7 +586,8 @@ See [#89](https://github.com/taiki-e/cargo-hack/pull/89) for more.
 
 Initial release
 
-[Unreleased]: https://github.com/taiki-e/cargo-hack/compare/v0.6.44...HEAD
+[Unreleased]: https://github.com/taiki-e/cargo-hack/compare/v0.6.45...HEAD
+[0.6.45]: https://github.com/taiki-e/cargo-hack/compare/v0.6.44...v0.6.45
 [0.6.44]: https://github.com/taiki-e/cargo-hack/compare/v0.6.43...v0.6.44
 [0.6.43]: https://github.com/taiki-e/cargo-hack/compare/v0.6.42...v0.6.43
 [0.6.42]: https://github.com/taiki-e/cargo-hack/compare/v0.6.41...v0.6.42
