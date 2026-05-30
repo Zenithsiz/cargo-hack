@@ -88,7 +88,8 @@ impl Command {
                         && (l.contains(": no edition set: defaulting to the 2015 edition")
                             || l.contains(
                                 ": `package.edition` is unspecified, defaulting to `2015`",
-                            )))
+                            )
+                            || l.contains("` (manifest) generated 1 warning")))
                 })
                 .collect(),
             status: output.status,
