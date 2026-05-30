@@ -143,6 +143,9 @@ impl Args {
                 break;
             }
             if arg == "--workspace-behavior=cargo" {
+                if workspace_behavior != WorkspaceBehavior::Default {
+                    multi_arg(&Long("workspace-behavior"), None)?;
+                }
                 workspace_behavior = WorkspaceBehavior::Cargo;
                 continue;
             }

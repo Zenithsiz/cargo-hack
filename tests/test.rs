@@ -52,6 +52,7 @@ fn failure() {
         "--optional-deps",
         "--manifest-path=foo",
         "--color=auto",
+        "--workspace-behavior=cargo",
     ] {
         cargo_hack(["check", flag, flag]).assert_failure("real").stderr_contains(format!(
             "The argument '{}' was provided more than once, but cannot be used multiple times",
