@@ -12,9 +12,9 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 
 ## [Unreleased]
 
-- Support versioned name and package spec in `--package` and `--exclude`.
+- Support versioned name and package spec in `--package` and `--exclude`. ([#298](https://github.com/taiki-e/cargo-hack/pull/298))
 
-- Add `--workspace-behavior=cargo` option.
+- Add `--workspace-behavior=cargo` option. ([#298](https://github.com/taiki-e/cargo-hack/pull/298), [3b4f421](https://github.com/taiki-e/cargo-hack/commit/3b4f4214b28da88ea64c003e657a8b5a6218e3aa))
 
   This is for use cases where cargo-hack's workspace handling does not work. Note that this is incompatible with flags that require cargo-hack's workspace handling to work properly (e.g., `--each-feature`, `--feature-powerset`, etc.).
 
