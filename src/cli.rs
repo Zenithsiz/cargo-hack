@@ -31,10 +31,8 @@ pub(crate) struct Args {
     pub(crate) package: Vec<String>,
     /// --exclude <SPEC>...
     pub(crate) exclude: Vec<String>,
-    /// --workspace / --all
+    /// --workspace (--all)
     pub(crate) workspace: bool,
-    /// --all
-    pub(crate) all: bool,
     /// --each-feature
     pub(crate) each_feature: bool,
     /// --feature-powerset
@@ -107,7 +105,7 @@ pub(crate) struct Args {
     pub(crate) no_default_features: bool,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub(crate) enum WorkspaceBehavior {
     Cargo,
     Default,
@@ -138,10 +136,15 @@ impl Args {
             None => bail!("expected subcommand '{SUBCMD}'"),
         }
         let mut args = vec![];
+        let mut workspace_behavior = WorkspaceBehavior::Default;
         for arg in &mut raw_args {
             let arg = arg?;
             if arg == "--" {
                 break;
+            }
+            if arg == "--workspace-behavior=cargo" {
+                workspace_behavior = WorkspaceBehavior::Cargo;
+                continue;
             }
             args.push(arg);
         }
@@ -158,7 +161,6 @@ impl Args {
         let mut features = vec![];
 
         let mut workspace = false;
-        let mut all = false;
         let mut no_dev_deps = false;
         let mut remove_dev_deps = false;
         let mut each_feature = false;
@@ -178,7 +180,6 @@ impl Args {
         let mut version_step = None;
         let mut log_group: Option<String> = None;
         let mut disable_log_grouping = false;
-        let mut workspace_behavior: Option<String> = None;
 
         let mut optional_deps = None;
         let mut include_features = vec![];
@@ -263,16 +264,33 @@ impl Args {
                     target.insert(parser.value()?.parse()?);
                 }
 
-                Long("manifest-path") => parse_opt!(manifest_path, false),
+                Long("manifest-path") => {
+                    parse_opt!(manifest_path, workspace_behavior == WorkspaceBehavior::Cargo);
+                }
                 Long("depth") => parse_opt!(depth, false),
                 Long("rust-version") => parse_flag!(rust_version),
                 Long("version-range") => parse_opt!(version_range, false),
                 Long("version-step") => parse_opt!(version_step, false),
                 Long("log-group") => parse_opt!(log_group, false),
-                Long("workspace-behavior") => parse_opt!(workspace_behavior, false),
 
-                Short('p') | Long("package") => package.push(parser.value()?.parse()?),
-                Long("exclude") => exclude.push(parser.value()?.parse()?),
+                Short('p') | Long("package") => {
+                    let flag = format_flag(&arg);
+                    let val = parser.value()?;
+                    package.push(val.parse()?);
+                    if workspace_behavior == WorkspaceBehavior::Cargo {
+                        cargo_args.push(flag);
+                        cargo_args.push(val.string()?);
+                    }
+                }
+                Long("exclude") => {
+                    let flag = format_flag(&arg);
+                    let val = parser.value()?;
+                    exclude.push(val.parse()?);
+                    if workspace_behavior == WorkspaceBehavior::Cargo {
+                        cargo_args.push(flag);
+                        cargo_args.push(val.string()?);
+                    }
+                }
                 Long("group-features") => group_features.push(parser.value()?.parse()?),
                 Long("mutually-exclusive-features") => {
                     mutually_exclusive_features.push(parser.value()?.parse()?);
@@ -311,9 +329,11 @@ impl Args {
                     }
                 }
 
-                Long("workspace") => parse_flag!(workspace),
-                Long("all") => {
-                    all = true;
+                Long("workspace" | "all") => {
+                    if workspace_behavior == WorkspaceBehavior::Cargo {
+                        let flag = format_flag(&arg);
+                        cargo_args.push(flag);
+                    }
                     parse_flag!(workspace);
                 }
                 Long("no-dev-deps") => parse_flag!(no_dev_deps),
@@ -332,7 +352,11 @@ impl Args {
                 Long("partition") => parse_opt!(partition, false),
                 Long("print-command-list") => parse_flag!(print_command_list),
                 Long("no-manifest-path") => parse_flag!(no_manifest_path),
-                Long("locked") => parse_flag!(locked),
+                Long("locked") => {
+                    let flag = format_flag(&arg);
+                    cargo_args.push(flag);
+                    parse_flag!(locked);
+                }
                 Long("ignore-unknown-features") => parse_flag!(ignore_unknown_features),
                 Short('v') | Long("verbose") => verbose += 1,
 
@@ -357,6 +381,12 @@ impl Args {
                 Short('V') | Long("version") if subcommand.is_none() => {
                     println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
                     return Ok(None);
+                }
+
+                Long("workspace-behavior") => {
+                    bail!(
+                        "argument for --workspace-behavior must be cargo and in form of --workspace-behavior=cargo"
+                    );
                 }
 
                 // passthrough
@@ -475,21 +505,17 @@ impl Args {
                 _ => {}
             }
         }
-        let workspace_behavior = match workspace_behavior.as_deref() {
-            Some("cargo") => {
+        match workspace_behavior {
+            WorkspaceBehavior::Cargo => {
                 if each_feature {
                     conflicts("--workspace-behavior=cargo", "--each-feature")?;
                 }
                 if feature_powerset {
                     conflicts("--workspace-behavior=cargo", "--feature-powerset")?;
                 }
-                WorkspaceBehavior::Cargo
             }
-            Some(other) => {
-                bail!("argument for --workspace-behavior must be cargo, but found `{other}`")
-            }
-            None => WorkspaceBehavior::Default,
-        };
+            WorkspaceBehavior::Default => {}
+        }
 
         if let Some(pos) = cargo_args.iter().position(|a| match &**a {
             "--example" | "--examples" | "--test" | "--tests" | "--bench" | "--benches"
@@ -645,7 +671,6 @@ impl Args {
             package,
             exclude,
             workspace,
-            all,
             each_feature,
             feature_powerset,
             no_dev_deps,

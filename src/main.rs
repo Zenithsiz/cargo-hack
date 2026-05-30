@@ -491,31 +491,9 @@ fn exec_on_packages(
     keep_going: &mut KeepGoing,
     cargo_version: u32,
 ) -> Result<()> {
-    if cx.locked {
-        line.arg("--locked");
-    }
     match cx.workspace_behavior {
         WorkspaceBehavior::Default => {}
-        WorkspaceBehavior::Cargo => {
-            if let Some(manifest_path) = &cx.manifest_path {
-                line.arg("--manifest-path");
-                line.arg(manifest_path);
-            }
-            for pkg in &cx.package {
-                line.arg("--package");
-                line.arg(pkg);
-            }
-            for pkg in &cx.exclude {
-                line.arg("--exclude");
-                line.arg(pkg);
-            }
-            if cx.all {
-                line.arg("--all");
-            } else if cx.workspace {
-                line.arg("--workspace");
-            }
-            line.append_features_from_args(cx, None);
-        }
+        WorkspaceBehavior::Cargo => line.append_features_from_args(cx, None),
     }
     if cx.target.is_empty() || cargo_version >= 64 {
         // TODO: We should test that cargo's multi-target build does not break the resolver behavior required for a correct check.
